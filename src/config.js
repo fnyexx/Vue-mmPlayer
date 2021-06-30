@@ -4,10 +4,11 @@ export const VERSION = process.env.VUE_APP_VERSION
 /**
  * 默认歌单ID （正在播放列表）
  * 默认云音乐热歌榜 https://music.163.com/#/discover/toplist?id=3778678
+ * 电音 https://music.163.com/#/discover/toplist?id=1978921795
  * 如需要修改自定义歌单的请修改
  * @type {number}
  */
-export const defaultSheetId = 3778678
+export const defaultSheetId = 1978921795
 
 // 默认分页数量
 export const defaultLimit = 30

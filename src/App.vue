@@ -1,132 +1,65 @@
-<template>
-  <div id="app">
-    <!--主体-->
-    <mm-header />
-    <router-view class="router-view" />
-    <!--更新说明-->
-    <mm-dialog
-      ref="versionDialog"
-      type="alert"
-      head-text="更新提示"
-      :body-text="versionInfo"
-    />
-    <!--播放器-->
-    <audio ref="mmPlayer"></audio>
-  </div>
-</template>
+// The Vue build version to load with the `import` command
+// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
+// import 'babel-polyfill'
+// import '@/utils/hack'
+import Vue from 'vue'
+import store from './store'
+import router from './router'
+import App from './App'
+import fastclick from 'fastclick'
+import mmToast from 'base/mm-toast'
+import Icon from 'base/mm-icon/mm-icon'
+import VueLazyload from 'vue-lazyload'
+import { VERSION } from './config'
 
-<script>
-import { mapMutations, mapActions } from 'vuex'
-import { getPlaylistDetail } from 'api'
-import { defaultSheetId, VERSION } from '@/config'
-import { createTopList } from '@/utils/song'
-import MmHeader from 'components/mm-header/mm-header'
-import MmDialog from 'base/mm-dialog/mm-dialog'
-import { getVersion, setVersion } from '@/utils/storage'
+import '@/styles/index.less'
 
-const VERSION_INFO = `<div class="mm-dialog-text text-left">
-版本号：${VERSION}（${process.env.VUE_APP_UPDATE_TIME}）<br/>
-1、 采用新版图标<br>
-2、 增加移动端歌词显示<br>
-3、 修复背景图白边<br>
-4、 修复音乐进度条点击无效问题
-</div>`
+// 优化移动端300ms点击延迟
+fastclick.attach(document.body)
 
-export default {
-  name: 'App',
-  components: {
-    MmHeader,
-    MmDialog
-  },
-  created() {
-    // 设置版本更新信息
-    this.versionInfo = VERSION_INFO
+// 弹出层
+Vue.use(mmToast)
 
-    // 获取正在播放列表
-    getPlaylistDetail(defaultSheetId).then(playlist => {
-      const list = playlist.tracks.slice(0, 100)
-      this.setPlaylist({ list })
-    })
+// icon 组件
+Vue.component(Icon.name, Icon)
 
-    // 设置title
-    let OriginTitile = document.title
-    let titleTime
-    document.addEventListener('visibilitychange', function() {
-      if (document.hidden) {
-        document.title = '死鬼去哪里了！'
-        clearTimeout(titleTime)
-      } else {
-        document.title = '(つェ⊂)咦!又好了!'
-        titleTime = setTimeout(function() {
-          document.title = OriginTitile
-        }, 2000)
-      }
-    })
+// 懒加载
+Vue.use(VueLazyload, {
+  preLoad: 1,
+  loading: require('assets/img/default.png')
+})
 
-    // 设置audio元素
-    this.$nextTick(() => {
-      this.setAudioele(this.$refs.mmPlayer)
-    })
+// 访问版本统计
+window._hmt && window._hmt.push(['_setCustomVar', 1, 'version', VERSION, 1])
 
-    // 首次加载完成后移除动画
-    let loadDOM = document.querySelector('#appLoading')
-    if (loadDOM) {
-      const animationendFunc = function() {
-        loadDOM.removeEventListener('animationend', animationendFunc)
-        loadDOM.removeEventListener('webkitAnimationEnd', animationendFunc)
-        document.body.removeChild(loadDOM)
-        loadDOM = null
-        const version = getVersion()
-        if (version !== null) {
-          setVersion(VERSION)
-          if (version !== VERSION) {
-            this.$refs.versionDialog.show()
-          }
-        } else {
-          setVersion(VERSION)
-          this.$refs.versionDialog.show()
-        }
-      }.bind(this)
-      loadDOM.addEventListener('animationend', animationendFunc)
-      loadDOM.addEventListener('webkitAnimationEnd', animationendFunc)
-      loadDOM.classList.add('removeAnimate')
-    }
-  },
-  methods: {
-    // 歌曲数据处理
-    _formatSongs(list) {
-      let ret = []
-      list.forEach(item => {
-        const musicData = item
-        if (musicData.id) {
-          ret.push(createTopList(musicData))
-        }
-      })
-      return ret
-    },
-    ...mapMutations({
-      setAudioele: 'SET_AUDIOELE'
-    }),
-    ...mapActions(['setPlaylist'])
+const redirectList = ['/music/details', '/music/comment']
+router.beforeEach((to, from, next) => {
+  window._hmt &&
+    to.path &&
+    window._hmt.push(['_trackPageview', '/#' + to.fullPath])
+  if (redirectList.includes(to.path)) {
+    next()
+  } else {
+    document.title =
+      (to.meta.title && `${to.meta.title} - 一只云在线音乐播放器`) ||
+      '一只云在线音乐播放器'
+    next()
   }
-}
-</script>
+})
 
-<style lang="less">
-#app {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  color: @text_color;
-  font-size: @font_size_medium;
+// 版权信息
+window.mmPlayer = window.mmplayer = `欢迎使用 mmPlayer!
+当前版本为：V${VERSION}
+作者：茂茂
+Github：https://github.com/maomao1996/Vue-mmPlayer
+歌曲来源于网易云音乐 (https://music.163.com)`
+// eslint-disable-next-line no-console
+console.info(`%c${window.mmplayer}`, `color:blue`)
 
-  .router-view {
-    width: 100%;
-    height: 100%;
-  }
-
-  audio {
-    position: fixed;
-  }
-}
-</style>
+// eslint-disable-next-line no-new
+new Vue({
+  el: '#mmPlayer',
+  store,
+  router,
+  render: h => h(App)
+})

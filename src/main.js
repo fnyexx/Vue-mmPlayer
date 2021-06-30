@@ -35,14 +35,14 @@ window._hmt && window._hmt.push(['_setCustomVar', 1, 'version', VERSION, 1])
 const redirectList = ['/music/details', '/music/comment']
 router.beforeEach((to, from, next) => {
   window._hmt &&
-    to.path &&
-    window._hmt.push(['_trackPageview', '/#' + to.fullPath])
+  to.path &&
+  window._hmt.push(['_trackPageview', '/#' + to.fullPath])
   if (redirectList.includes(to.path)) {
     next()
   } else {
     document.title =
-      (to.meta.title && `${to.meta.title} - mmPlayer在线音乐播放器`) ||
-      'mmPlayer在线音乐播放器'
+      (to.meta.title && `${to.meta.title} - 一只云在线音乐播放器`) ||
+      '一只云在线音乐播放器'
     next()
   }
 })
